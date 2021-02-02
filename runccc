@@ -1,0 +1,87 @@
+#!/bin/sh
+#rem config <ip> <port> <id> passwd> <xml folder>
+source ~/prj/bin/myprj
+
+Argc=$#
+Release_dir=~/prj/$Myprj/console/console/project_window/$WHBS_CONSOLE_TARGETID/release
+Configexe=$Release_dir/config.exe
+Libssldll=libssl-10.dll
+Folder=--path:$1
+Passwd=12345
+#Passwd=[MD5]gnzLDuqKcGxMNKFokfhOew==,[SHA256]WZRHGrsBESr8wYFZ9sx0tPURuZgG2lmzyvWpwXPKz8U=
+Port=80
+
+#[ -L "$Release_dir/$Libssldll" ] || ln -s ../../dll/$Libssldll $Release_dir
+
+if [ $Argc -lt 1 ]; then
+	echo ip 끝자리는?
+	echo "사용법: $0 <ip끝자리> [-p(--port) 포트|-w(--password) 암호|-f(--folder) 폴더|-t(--tls)]"
+	exit 0
+fi
+
+#arg0
+if [ $0 = "./tlsccc" ]; then
+	Tls=-tls --runlevel0
+	Port=443
+	Passwd=1111111qQ
+fi
+
+#arg1, see https://stackoverflow.com/questions/806906/how-do-i-test-if-a-variable-is-a-number-in-bash
+re='^[0-9]+$'
+if ! [[ $1 =~ $re ]]; then
+	echo null ip 는 help임	
+elif [ "${1:0:3}" = "000" ]; then
+	Ipaddr=192.168.211.${1:3:3}
+elif [ "${1:0:2}" = "00" ]; then
+	Ipaddr=192.168.210.${1:2:3}
+elif [ "${1:0:1}" = "0" ]; then
+	Ipaddr=192.168.110.${1:1:3}
+else
+	Ipaddr=192.168.217.$1
+fi
+echo $Ipaddr 임
+
+#shift arg1(i.e., ip)
+shift
+
+#
+#https://stackoverflow.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash
+#Bruno 고마워
+#
+while [[ $# -gt 0 ]]
+do
+key="$1"
+
+case $key in
+	-p|--port)
+	Port="$2"
+	shift
+	shift
+	;;
+	
+	-w|--password)
+	Passwd="$2"
+	shift
+	shift
+	;;
+
+	-f|--folder)
+	Folder="$2"
+	shift
+	shift
+	;;
+	
+	-t|--tls)
+	Tls="-tls --runlevel0"
+	Port=443
+	shift
+	;;
+esac
+done
+
+if [ ! -f "$Configexe" ]; then
+	echo config.exe가 없는 거 같다
+	exit 0
+fi
+
+eee $Configexe $Ipaddr $Port admin $Passwd $Folder $Tls
